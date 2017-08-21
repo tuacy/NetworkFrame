@@ -1,0 +1,9 @@
+/.gradle
+/.idea
+/build
+/gradlew
+/gradlew.bat
+/NetworkFrame.iml
+/local.properties
+/app/app.iml
+/gradle
