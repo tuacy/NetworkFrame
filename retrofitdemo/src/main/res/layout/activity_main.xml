@@ -6,15 +6,45 @@
     android:orientation="vertical">
 
     <Button
-        android:id="@+id/button_get_no_parameter"
+        android:id="@+id/button_get_one_book_url"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Get无参数"/>
+        android:text="Get+Url" />
 
     <Button
-        android:id="@+id/button_get_has_parameter"
+        android:id="@+id/button_get_all_book"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Get带参数"/>
+        android:text="Get" />
+
+    <Button
+        android:id="@+id/button_get_one_book_path"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Get+Path" />
+
+    <Button
+        android:id="@+id/button_get_one_book_query"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Get+Query" />
+
+    <Button
+        android:id="@+id/button_get_one_book_query_more"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="多个Query" />
+
+    <Button
+        android:id="@+id/button_get_one_book_query_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="QueryName" />
+
+    <Button
+        android:id="@+id/button_get_one_book_post_urlencoded"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Post FormUrlEncoded" />
 
 </LinearLayout>

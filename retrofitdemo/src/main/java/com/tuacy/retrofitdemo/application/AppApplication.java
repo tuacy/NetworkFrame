@@ -20,7 +20,7 @@ public class AppApplication extends Application {
 
 	private void initRetrofit() {
 		Retrofit retrofit = new Retrofit.Builder().addConverterFactory(GsonConverterFactory.create())
-												  .baseUrl("http://192.168.5.14:3003/")
+												  .baseUrl("http://192.168.5.14:3033/")
 												  .build();
 		mNetworkApi = retrofit.create(AppRetrofitApi.class);
 	}
