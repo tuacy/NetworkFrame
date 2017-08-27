@@ -156,11 +156,33 @@ public class MainActivity extends BaseActivity {
 			}
 		});
 
+		findViewById(R.id.button_get_one_book_post_body).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				BookBean book = new BookBean(0, "html", "html");
+				Call<BookBean> requestCall = mNetworkApi.addBookPost(book);
+				requestCall.enqueue(new Callback<BookBean>() {
+					@Override
+					public void onResponse(@NonNull Call<BookBean> call, @NonNull Response<BookBean> response) {
+						BookBean body = response.body();
+						if (body != null) {
+							Log.d("tuacy", body.toString());
+						}
+					}
+
+					@Override
+					public void onFailure(@NonNull Call<BookBean> call, Throwable t) {
+
+					}
+				});
+			}
+		});
+
 		findViewById(R.id.button_get_one_book_post_urlencoded).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				BookBean book = new BookBean(0, "html", "html");
-				Call<BookBean> requestCall = mNetworkApi.getBookPost(book);
+				Call<BookBean> requestCall = mNetworkApi.addBookForm("vue", "vue");
 				requestCall.enqueue(new Callback<BookBean>() {
 					@Override
 					public void onResponse(@NonNull Call<BookBean> call, @NonNull Response<BookBean> response) {

@@ -42,6 +42,12 @@
         android:text="QueryName" />
 
     <Button
+        android:id="@+id/button_get_one_book_post_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Post Body" />
+
+    <Button
         android:id="@+id/button_get_one_book_post_urlencoded"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

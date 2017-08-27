@@ -7,7 +7,10 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
+import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
@@ -35,7 +38,15 @@ public interface AppRetrofitApi {
 	Call<List<BookBean>> getBookByUrl(@Url String relateUrl);
 
 	@POST("books")
-	Call<BookBean> getBookPost(@Body BookBean book);
+	Call<BookBean> addBookPost(@Body BookBean book);
+
+	@Headers({
+		"test-header: header",
+		"test-header: vue"
+	})
+	@FormUrlEncoded
+	@POST("books")
+	Call<BookBean> addBookForm(@Field("title") String title, @Field("author") String author);
 
 
 }
