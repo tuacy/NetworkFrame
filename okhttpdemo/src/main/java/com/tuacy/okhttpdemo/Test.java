@@ -1,7 +1,9 @@
 package com.tuacy.okhttpdemo;
 
+import java.io.IOException;
 import java.net.Proxy;
 import java.net.ProxySelector;
+import java.net.URL;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -12,16 +14,25 @@ import javax.net.ssl.X509TrustManager;
 
 import okhttp3.Authenticator;
 import okhttp3.Cache;
+import okhttp3.CacheControl;
+import okhttp3.Callback;
 import okhttp3.CertificatePinner;
+import okhttp3.Challenge;
 import okhttp3.ConnectionPool;
 import okhttp3.ConnectionSpec;
 import okhttp3.CookieJar;
 import okhttp3.Dispatcher;
 import okhttp3.Dns;
+import okhttp3.Handshake;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.internal.InternalCache;
 
 
@@ -138,22 +149,239 @@ public interface Test {
 	public OkHttpClient.Builder connectionSpecs(List<ConnectionSpec> connectionSpecs);
 
 	/**
-	 *
+	 * 获取应用拦截器
 	 */
 	public List<Interceptor> interceptors();
 
 	/**
-	 *
+	 * 添加应用拦截器
 	 */
 	public OkHttpClient.Builder addInterceptor(Interceptor interceptor);
 
 	/**
-	 *
+	 * 获取网络拦截器
 	 */
 	public List<Interceptor> networkInterceptors();
 
 	/**
-	 *
+	 * 添加网络拦截器
 	 */
 	public OkHttpClient.Builder addNetworkInterceptor(Interceptor interceptor);
+
+
+
+	/********** Call *********/
+	/**
+	 * 获取request(网络请求参数的封装)
+	 */
+	Request request();
+
+	/**
+	 * 同步请求
+	 * @throws IllegalStateException 当这个Call已经在请求的时候爬出IllegalStateException
+	 */
+	Response execute() throws IOException;
+
+	/**
+	 * 异步请求数据
+	 * @throws IllegalStateException 当这个Call已经在请求的时候爬出IllegalStateException
+	 */
+	void enqueue(Callback responseCallback);
+
+	/**
+	 * 取消当前请求
+	 */
+	void cancel();
+
+	/**
+	 * 网络请求是否在进行(可以在请求之前判断下)
+	 */
+	boolean isExecuted();
+
+	/**
+	 * 网络请求是否取消
+	 */
+	boolean isCanceled();
+
+	/******** request ***********/
+	/**
+	 * 设置当前request的url
+	 */
+	public Request.Builder url(HttpUrl url);
+
+	/**
+	 * 设置当前request的url
+	 */
+	public Request.Builder url(String url);
+
+	/**
+	 * 设置当前request的url
+	 */
+	public Request.Builder url(URL url);
+
+	/**
+	 * 添加当前请求header(key-value的形式如果当前header的key存在则会替换)
+	 */
+	public Request.Builder header(String name, String value);
+
+	/**
+	 * 添加当前请求header(允许存在多个相同的key)
+	 */
+	public Request.Builder addHeader(String name, String value);
+
+	/**
+	 * 移除当前请求header
+	 */
+	public Request.Builder removeHeader(String name);
+
+	/**
+	 * 设置请求头(之前设置的无效)
+	 */
+	public Request.Builder headers(Headers headers);
+
+	/**
+	 * 设置cache相关的请求头(Cache-Control)
+	 */
+	public Request.Builder cacheControl(CacheControl cacheControl);
+
+	/**
+	 * GET请求
+	 */
+	public Request.Builder get();
+
+	/**
+	 * HEAD请求
+	 */
+	public Request.Builder head();
+
+	/**
+	 * POST请求+BODY
+	 */
+	public Request.Builder post(RequestBody body);
+
+	/**
+	 * DELETE请求+BODY
+	 */
+	public Request.Builder delete(RequestBody body);
+
+	/**
+	 * DELETE请求+无BODY
+	 */
+	public Request.Builder delete();
+
+	/**
+	 * PUT请求+BODY
+	 */
+	public Request.Builder put(RequestBody body);
+
+	/**
+	 * PATCH请求+BODY
+	 */
+	public Request.Builder patch(RequestBody body);
+
+	/**
+	 * 自己写请求方式+BODY
+	 */
+	public Request.Builder method(String method, RequestBody body);
+
+	/**
+	 * 设置当前请求的tag
+	 */
+	public Request.Builder tag(Object tag);
+
+	/******* response *******/
+	/**
+	 * 获取当前请求的request
+	 */
+	public Request request();
+
+	/**
+	 * 获取当前请求的协议例如{@link Protocol#HTTP_1_1} or {@link Protocol#HTTP_1_0}.
+	 */
+	public Protocol protocol();
+
+	/**
+	 * 获取当前请求的状态码
+	 */
+	public int code();
+
+	/**
+	 * 当前请求是否成功[状态码200..300)
+	 */
+	public boolean isSuccessful();
+
+	/**
+	 * 当前请求状态码对应的message
+	 */
+	public String message();
+
+	/**
+	 * 获取当前请求SSL/TLS握手协议验证时的信息
+	 */
+	public Handshake handshake();
+
+	/**
+	 * 获取当前请求返回的header
+	 */
+	public List<String> headers(String name);
+
+	/**
+	 * 获取当前请求返回的header
+	 */
+	public String header(String name);
+
+	/**
+	 * 获取当前请求返回的header(如果不存在返回默认值)
+	 */
+	public String header(String name, String defaultValue);
+
+	/**
+	 *  取出当前请求返回的body(设置字节的长度)
+	 */
+	public ResponseBody peekBody(long byteCount) throws IOException;
+
+	/**
+	 * 取出当前请求返回的body
+	 */
+	public ResponseBody body();
+
+	/**
+	 * 是否重定向了
+	 */
+	public boolean isRedirect();
+
+	/**
+	 * 网络返回的原声数据(如果未使用网络，则为null)
+	 */
+	public Response networkResponse();
+
+	/**
+	 * 从cache中读取的网络原生数据
+	 */
+	public Response cacheResponse();
+
+	/**
+	 * 网络重定向后的,存储的上一次网络请求返回的数据
+	 */
+	public Response priorResponse();
+
+	/**
+	 * 获得所有当前response所有支持的认证
+	 */
+	public List<Challenge> challenges();
+
+	/**
+	 * response里面header Cache-Control 里面的信息
+	 */
+	public CacheControl cacheControl();
+
+	/**
+	 * 发起请求的时间
+	 */
+	public long sentRequestAtMillis();
+
+	/**
+	 * 收到返回数据时的时间
+	 */
+	public long receivedResponseAtMillis();
 }
