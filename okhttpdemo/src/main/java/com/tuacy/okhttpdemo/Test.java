@@ -1,5 +1,6 @@
 package com.tuacy.okhttpdemo;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -27,6 +28,7 @@ import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -34,6 +36,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.InternalCache;
+import okio.BufferedSink;
+import okio.ByteString;
 
 
 public interface Test {
@@ -384,4 +388,47 @@ public interface Test {
 	 * 收到返回数据时的时间
 	 */
 	public long receivedResponseAtMillis();
+
+	/********* RequestBody ********/
+	/**
+	 * 设置request body 的类型
+	 */
+	public abstract MediaType contentType();
+
+	/**
+	 * 设置request body 的长度
+	 */
+	public long contentLength() throws IOException;
+
+	/**
+	 * 把body的内容写到BufferedSink里面去
+	 */
+	public abstract void writeTo(BufferedSink sink) throws IOException;
+
+	/**
+	 * 返回一个RequestBody,body的能容是String
+	 */
+	public static RequestBody create(MediaType contentType, String content);
+
+	/**
+	 * 返回一个RequestBody,body的能容是ByteString
+	 */
+	public static RequestBody create(final MediaType contentType, final ByteString content);
+
+	/**
+	 * 返回一个RequestBody,body的能容是Byte[]
+	 */
+	public static RequestBody create(final MediaType contentType, final byte[] content);
+
+	/**
+	 * 返回一个RequestBody,body的能容是Byte[],而且规定了开始位置，和字符长度
+	 */
+	public static RequestBody create(final MediaType contentType, final byte[] content,
+									 final int offset, final int byteCount);
+
+
+	/**
+	 * 返回一个RequestBody,body的能容是File
+	 */
+	public static RequestBody create(final MediaType contentType, final File file);
 }
