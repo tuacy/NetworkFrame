@@ -8,6 +8,6 @@
 /app/app.iml
 /gradle
 /retrofitdemo/retrofitdemo.iml
-/okhttpdemo//okhttpdemo/.iml
-/library/library/.iml
 /library/build
+/library/library.iml
+/okhttpdemo/okhttpdemo.iml
