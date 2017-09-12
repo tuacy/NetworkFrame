@@ -7,23 +7,22 @@ public class ProtocolException extends Exception {
 
 	private static final long serialVersionUID = -954026383517356797L;
 
-	private final ProtocolError mErrorCode;
+	private ProtocolError mErrorCode;
 
 	public ProtocolException(ProtocolError errorCode) {
 		this.mErrorCode = errorCode;
 	}
 
-	public ProtocolException(ProtocolError errorCode, String detailMessage) {
-		super(detailMessage);
+	public ProtocolException(Throwable throwable, ProtocolError errorCode) {
+		super(throwable);
 		mErrorCode = errorCode;
 	}
 
-	public ProtocolException(ProtocolError errorCode, String detailMessage, Throwable throwable) {
-		super(detailMessage, throwable);
+	public void setErrorCode(ProtocolError errorCode) {
 		mErrorCode = errorCode;
 	}
 
-	public ProtocolError errorCode() {
+	public ProtocolError getErrorCode() {
 		return mErrorCode;
 	}
 

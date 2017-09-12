@@ -5,6 +5,9 @@ package com.tuacy.networkframe.library.exception;
  */
 public enum ProtocolError {
 
+	ERROR_HTTP,
+	ERROR_CONNECT,
+	ERROR_HOST,
 	ERROR_DATA_FORMAT,
 	ERROR_UNKNOWN
 
