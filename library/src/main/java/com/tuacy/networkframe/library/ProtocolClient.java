@@ -2,7 +2,9 @@ package com.tuacy.networkframe.library;
 
 import android.content.Context;
 
+import com.trello.rxlifecycle.LifecycleTransformer;
 import com.tuacy.networkframe.library.base.ProtocolBaseRequest;
+import com.tuacy.networkframe.library.callback.ProtocolBaseCallback;
 import com.tuacy.networkframe.library.exception.ProtocolError;
 import com.tuacy.networkframe.library.exception.ProtocolException;
 import com.tuacy.networkframe.library.exception.RetryNetworkException;
@@ -61,15 +63,6 @@ public class ProtocolClient {
 		return mInstance;
 	}
 
-	/**
-	 * 异常处理
-	 */
-	private Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
-		@Override
-		public Observable<T> call(Throwable throwable) {
-			return Observable.error(transformerException(throwable));
-		}
-	};
 
 	/**
 	 * 统一管理异常
@@ -102,7 +95,10 @@ public class ProtocolClient {
 		return exception;
 	}
 
-	public <T> void onProtocolRequest(Context context, ProtocolBaseRequest<T> request/*, LifecycleTransformer<T> lifecycleTransformer*/) {
+	public <T> void onProtocolRequest(Context context,
+									  ProtocolBaseRequest<T> request,
+									  ProtocolBaseCallback<T> callback,
+									  LifecycleTransformer<T> lifecycleTransformer) {
 		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
 												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
 												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
@@ -114,12 +110,48 @@ public class ProtocolClient {
 												  .baseUrl(request.getBaseUrl())
 												  .build();
 
+		Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
+			@Override
+			public Observable<T> call(Throwable throwable) {
+				return Observable.error(transformerException(throwable));
+			}
+		};
+
 		/*rx处理*/
 		Observable<T> observable = request.getObservable(retrofit).retryWhen(new RetryNetworkException())//失败后的retry配置
-										  .onErrorResumeNext((Func1<Throwable, Observable<T>>)mErrorResume)//异常处理
-										  //										  .compose(lifecycleTransformer)//生命周期管理(Activity，Fragment等销毁的时候处理)
-										  .subscribeOn(Schedulers.io())
-										  .unsubscribeOn(Schedulers.io())//http请求线程
+										  .onErrorResumeNext(mErrorResume)//异常处理
+										  .compose(lifecycleTransformer)//生命周期管理(Activity，Fragment等销毁的时候处理)
+										  .subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())//http请求线程
 										  .observeOn(AndroidSchedulers.mainThread());//回调线程
+		/*数据注册*/
+		observable.subscribe(new ProtocolSubscriber<>(context, request, callback));
+	}
+
+	public <T> void onProtocolRequest(Context context, ProtocolBaseRequest<T> request, ProtocolBaseCallback<T> callback) {
+		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
+												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
+												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
+												 .writeTimeout(request.getWriteTimeout(), TimeUnit.SECONDS)
+												 .build();
+		Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
+												  .addConverterFactory(request.getConvertFactory())
+												  .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+												  .baseUrl(request.getBaseUrl())
+												  .build();
+
+		Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
+			@Override
+			public Observable<T> call(Throwable throwable) {
+				return Observable.error(transformerException(throwable));
+			}
+		};
+
+		/*rx处理*/
+		Observable<T> observable = request.getObservable(retrofit).retryWhen(new RetryNetworkException())//失败后的retry配置
+										  .onErrorResumeNext(mErrorResume)//异常处理
+										  .subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())//http请求线程
+										  .observeOn(AndroidSchedulers.mainThread());//回调线程
+		/*数据注册*/
+		observable.subscribe(new ProtocolSubscriber<>(context, request, callback));
 	}
 }
