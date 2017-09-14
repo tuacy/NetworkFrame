@@ -3,10 +3,11 @@ package com.tuacy.networkframe.library;
 import android.content.Context;
 
 import com.trello.rxlifecycle.LifecycleTransformer;
-import com.tuacy.networkframe.library.base.ProtocolBaseRequest;
-import com.tuacy.networkframe.library.callback.ProtocolBaseCallback;
-import com.tuacy.networkframe.library.exception.ProtocolError;
-import com.tuacy.networkframe.library.exception.ProtocolException;
+import com.tuacy.networkframe.library.base.ProtocolsBaseRequest;
+import com.tuacy.networkframe.library.callback.ProtocolsBaseCallback;
+import com.tuacy.networkframe.library.cookie.ProtocolsCookies;
+import com.tuacy.networkframe.library.exception.ProtocolsError;
+import com.tuacy.networkframe.library.exception.ProtocolsException;
 import com.tuacy.networkframe.library.exception.RetryNetworkException;
 
 import org.json.JSONException;
@@ -26,23 +27,24 @@ import rx.functions.Func1;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class ProtocolClient {
+public class ProtocolsClient {
 
 
 	/**
 	 * 全局就一个基础的OkHttpClient
 	 */
-	private        OkHttpClient   mOkHttpClient = null;
+	private        OkHttpClient    mOkHttpClient = null;
 	/**
 	 * 单利模式
 	 */
-	private static ProtocolClient mInstance     = null;
+	private static ProtocolsClient mInstance     = null;
 
 	/**
 	 * 构造函数
 	 */
-	private ProtocolClient() {
+	private ProtocolsClient() {
 		mOkHttpClient = new OkHttpClient.Builder().retryOnConnectionFailure(true)
+												  .cookieJar(new ProtocolsCookies())
 												  .addNetworkInterceptor(
 													  new HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
 												  .build();
@@ -52,11 +54,11 @@ public class ProtocolClient {
 	/**
 	 * 单利模式
 	 */
-	public static ProtocolClient getInstance() {
+	public static ProtocolsClient getInstance() {
 		if (mInstance == null) {
-			synchronized (ProtocolClient.class) {
+			synchronized (ProtocolsClient.class) {
 				if (mInstance == null) {
-					mInstance = new ProtocolClient();
+					mInstance = new ProtocolsClient();
 				}
 			}
 		}
@@ -67,38 +69,39 @@ public class ProtocolClient {
 	/**
 	 * 统一管理异常
 	 */
-	private ProtocolException transformerException(Throwable e) {
-		ProtocolException exception = new ProtocolException(e, ProtocolError.ERROR_UNKNOWN);
+	private ProtocolsException transformerException(Throwable e) {
+		ProtocolsException exception = new ProtocolsException(e, ProtocolsError.ERROR_UNKNOWN);
 		if (e instanceof HttpException) {
-			/**
-			 * 网络异常
-			 */
-			exception.setErrorCode(ProtocolError.ERROR_HTTP);
+			//网络异常
+			exception.setErrorCode(ProtocolsError.ERROR_HTTP);
 		} else if (e instanceof ConnectException || e instanceof SocketTimeoutException) {
-			/**
-			 * 链接异常
-			 */
-			exception.setErrorCode(ProtocolError.ERROR_CONNECT);
+			//链接异常
+			exception.setErrorCode(ProtocolsError.ERROR_TIMEOUT);
 		} else if (e instanceof JSONException) {
-			exception.setErrorCode(ProtocolError.ERROR_DATA_FORMAT);
+			exception.setErrorCode(ProtocolsError.ERROR_DATA_FORMAT);
 		} else if (e instanceof UnknownHostException) {
-			/**
-			 * 无法解析该域名异常
-			 */
-			exception.setErrorCode(ProtocolError.ERROR_HOST);
+			//无法解析该域名异常
+			exception.setErrorCode(ProtocolsError.ERROR_HOST);
 		} else {
-			/**
-			 * 未知异常
-			 */
-			exception.setErrorCode(ProtocolError.ERROR_UNKNOWN);
+			//未知异常
+			exception.setErrorCode(ProtocolsError.ERROR_UNKNOWN);
 		}
 		return exception;
 	}
 
-	public <T> void onProtocolRequest(Context context,
-									  ProtocolBaseRequest<T> request,
-									  ProtocolBaseCallback<T> callback,
-									  LifecycleTransformer<T> lifecycleTransformer) {
+	/**
+	 * 网络请求
+	 *
+	 * @param context              context
+	 * @param request              request
+	 * @param callback             callback
+	 * @param lifecycleTransformer transformer
+	 * @param <T>                  类型
+	 */
+	public <T> void onProtocolsRequest(Context context,
+									   ProtocolsBaseRequest<T> request,
+									   ProtocolsBaseCallback<T> callback,
+									   LifecycleTransformer<T> lifecycleTransformer) {
 		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
 												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
 												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
@@ -117,17 +120,26 @@ public class ProtocolClient {
 			}
 		};
 
-		/*rx处理*/
-		Observable<T> observable = request.getObservable(retrofit).retryWhen(new RetryNetworkException())//失败后的retry配置
-										  .onErrorResumeNext(mErrorResume)//异常处理
-										  .compose(lifecycleTransformer)//生命周期管理(Activity，Fragment等销毁的时候处理)
-										  .subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())//http请求线程
-										  .observeOn(AndroidSchedulers.mainThread());//回调线程
-		/*数据注册*/
-		observable.subscribe(new ProtocolSubscriber<>(context, request, callback));
+		Observable<T> observable = request.getObservable(retrofit)
+										  .retryWhen(new RetryNetworkException())
+										  .onErrorResumeNext(mErrorResume)
+										  .compose(lifecycleTransformer)
+										  .subscribeOn(Schedulers.io())
+										  .unsubscribeOn(Schedulers.io())
+										  .observeOn(AndroidSchedulers.mainThread());
+
+		observable.subscribe(new ProtocolsSubscriber<>(context, request, callback));
 	}
 
-	public <T> void onProtocolRequest(Context context, ProtocolBaseRequest<T> request, ProtocolBaseCallback<T> callback) {
+	/**
+	 * 网络请求
+	 *
+	 * @param context  context
+	 * @param request  request
+	 * @param callback callback
+	 * @param <T>      类型
+	 */
+	public <T> void onProtocolsRequest(Context context, ProtocolsBaseRequest<T> request, ProtocolsBaseCallback<T> callback) {
 		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
 												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
 												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
@@ -146,12 +158,13 @@ public class ProtocolClient {
 			}
 		};
 
-		/*rx处理*/
-		Observable<T> observable = request.getObservable(retrofit).retryWhen(new RetryNetworkException())//失败后的retry配置
-										  .onErrorResumeNext(mErrorResume)//异常处理
-										  .subscribeOn(Schedulers.io()).unsubscribeOn(Schedulers.io())//http请求线程
-										  .observeOn(AndroidSchedulers.mainThread());//回调线程
-		/*数据注册*/
-		observable.subscribe(new ProtocolSubscriber<>(context, request, callback));
+		Observable<T> observable = request.getObservable(retrofit)
+										  .retryWhen(new RetryNetworkException())
+										  .onErrorResumeNext(mErrorResume)
+										  .subscribeOn(Schedulers.io())
+										  .unsubscribeOn(Schedulers.io())
+										  .observeOn(AndroidSchedulers.mainThread());
+
+		observable.subscribe(new ProtocolsSubscriber<>(context, request, callback));
 	}
 }

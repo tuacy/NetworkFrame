@@ -1,11 +1,11 @@
 package com.tuacy.networkframe.library.callback;
 
-import com.tuacy.networkframe.library.exception.ProtocolException;
+import com.tuacy.networkframe.library.exception.ProtocolsException;
 
 /**
  * 网络请求的callback方法，都是异步请求数据
  */
-public interface ProtocolBaseCallback<T> {
+public interface ProtocolsBaseCallback<T> {
 
 	/**
 	 * 开始网络请求
@@ -28,6 +28,6 @@ public interface ProtocolBaseCallback<T> {
 	 * @param tag       网络请求tag
 	 * @param exception 网络请求异常
 	 */
-	void onProtocolError(Object tag, ProtocolException exception);
+	void onProtocolError(Object tag, ProtocolsException exception);
 
 }
