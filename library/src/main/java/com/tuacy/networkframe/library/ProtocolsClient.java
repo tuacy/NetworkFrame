@@ -25,6 +25,7 @@ import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import rx.Observable;
 import rx.functions.Func1;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
 public class ProtocolsClient {
@@ -90,6 +91,102 @@ public class ProtocolsClient {
 	}
 
 	/**
+	 * 获取request经过处理之后的Observable
+	 *
+	 * @param request request
+	 * @param <T>     类型
+	 * @return Observable<T>
+	 */
+	private <T> Observable<T> getProtocolsRequestObservable(ProtocolsBaseRequest<T> request) {
+		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
+												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
+												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
+												 .writeTimeout(request.getWriteTimeout(), TimeUnit.SECONDS)
+												 .build();
+		Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
+												  .addConverterFactory(request.getConvertFactory())
+												  .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+												  .baseUrl(request.getBaseUrl())
+												  .build();
+
+		Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
+			@Override
+			public Observable<T> call(Throwable throwable) {
+				return Observable.error(transformerException(throwable));
+			}
+		};
+
+		return request.getObservable(retrofit)
+					  .retryWhen(new RetryNetworkException())
+					  .onErrorResumeNext(mErrorResume)
+					  .subscribeOn(Schedulers.io())
+					  .unsubscribeOn(Schedulers.io())
+					  .observeOn(AndroidSchedulers.mainThread());
+
+	}
+
+	private  <T, V, Y> Observable<Y> getProtocolsRequestsObservable(ProtocolsBaseRequest<T> requestOne, ProtocolsBaseRequest<V> requestTwo) {
+
+		Func1<Throwable, Observable<Y>> mErrorResume = new Func1<Throwable, Observable<Y>>() {
+			@Override
+			public Observable<Y> call(Throwable throwable) {
+				return Observable.error(transformerException(throwable));
+			}
+		};
+
+		Observable<T> observableOne = getProtocolsRequestObservable(requestOne);
+		Observable<V> observableTwo = getProtocolsRequestObservable(requestTwo);
+		return Observable.zip(observableOne, observableTwo, new Func2<T, V, Y>() {
+			@Override
+			public Y call(T t, V v) {
+				return new Y(jsonObject, jsonElements);
+			}
+		})
+						 .retryWhen(new RetryNetworkException())
+						 .onErrorResumeNext(mErrorResume)
+						 .subscribeOn(Schedulers.io())
+						 .unsubscribeOn(Schedulers.io())
+						 .observeOn(AndroidSchedulers.mainThread());
+	}
+
+	/**
+	 * Observable<T>
+	 *
+	 * @param request              request
+	 * @param lifecycleTransformer transformer
+	 * @param <T>                  类型
+	 * @return Observable<T>
+	 */
+	private <T> Observable<T> getProtocolsRequestObservable(ProtocolsBaseRequest<T> request, LifecycleTransformer<T> lifecycleTransformer) {
+		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
+												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
+												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
+												 .writeTimeout(request.getWriteTimeout(), TimeUnit.SECONDS)
+												 .build();
+		Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
+												  .addConverterFactory(request.getConvertFactory())
+												  .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+												  .baseUrl(request.getBaseUrl())
+												  .build();
+
+		Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
+			@Override
+			public Observable<T> call(Throwable throwable) {
+				return Observable.error(transformerException(throwable));
+			}
+		};
+
+		return request.getObservable(retrofit)
+					  .retryWhen(new RetryNetworkException())
+					  .onErrorResumeNext(mErrorResume)
+					  .compose(lifecycleTransformer)
+					  .subscribeOn(Schedulers.io())
+					  .unsubscribeOn(Schedulers.io())
+					  .observeOn(AndroidSchedulers.mainThread());
+
+	}
+
+	/**
 	 * 网络请求
 	 *
 	 * @param context              context
@@ -102,33 +199,7 @@ public class ProtocolsClient {
 									   ProtocolsBaseRequest<T> request,
 									   ProtocolsBaseCallback<T> callback,
 									   LifecycleTransformer<T> lifecycleTransformer) {
-		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
-												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
-												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
-												 .writeTimeout(request.getWriteTimeout(), TimeUnit.SECONDS)
-												 .build();
-		Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
-												  .addConverterFactory(request.getConvertFactory())
-												  .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-												  .baseUrl(request.getBaseUrl())
-												  .build();
-
-		Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
-			@Override
-			public Observable<T> call(Throwable throwable) {
-				return Observable.error(transformerException(throwable));
-			}
-		};
-
-		Observable<T> observable = request.getObservable(retrofit)
-										  .retryWhen(new RetryNetworkException())
-										  .onErrorResumeNext(mErrorResume)
-										  .compose(lifecycleTransformer)
-										  .subscribeOn(Schedulers.io())
-										  .unsubscribeOn(Schedulers.io())
-										  .observeOn(AndroidSchedulers.mainThread());
-
-		observable.subscribe(new ProtocolsSubscriber<>(context, request, callback));
+		getProtocolsRequestObservable(request, lifecycleTransformer).subscribe(new ProtocolsSubscriber<>(context, request, callback));
 	}
 
 	/**
@@ -140,31 +211,6 @@ public class ProtocolsClient {
 	 * @param <T>      类型
 	 */
 	public <T> void onProtocolsRequest(Context context, ProtocolsBaseRequest<T> request, ProtocolsBaseCallback<T> callback) {
-		OkHttpClient okHttpClient = mOkHttpClient.newBuilder()
-												 .connectTimeout(request.getConnectTimeout(), TimeUnit.SECONDS)
-												 .readTimeout(request.getReadTimeout(), TimeUnit.SECONDS)
-												 .writeTimeout(request.getWriteTimeout(), TimeUnit.SECONDS)
-												 .build();
-		Retrofit retrofit = new Retrofit.Builder().client(okHttpClient)
-												  .addConverterFactory(request.getConvertFactory())
-												  .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-												  .baseUrl(request.getBaseUrl())
-												  .build();
-
-		Func1<Throwable, Observable<T>> mErrorResume = new Func1<Throwable, Observable<T>>() {
-			@Override
-			public Observable<T> call(Throwable throwable) {
-				return Observable.error(transformerException(throwable));
-			}
-		};
-
-		Observable<T> observable = request.getObservable(retrofit)
-										  .retryWhen(new RetryNetworkException())
-										  .onErrorResumeNext(mErrorResume)
-										  .subscribeOn(Schedulers.io())
-										  .unsubscribeOn(Schedulers.io())
-										  .observeOn(AndroidSchedulers.mainThread());
-
-		observable.subscribe(new ProtocolsSubscriber<>(context, request, callback));
+		getProtocolsRequestObservable(request).subscribe(new ProtocolsSubscriber<>(context, request, callback));
 	}
 }
