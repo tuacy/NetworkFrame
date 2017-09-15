@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <Button
-        android:id="@+id/button_all_book"
+        android:id="@+id/button_request"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="book"/>
+        android:text="单个网络请求"/>
+
+    <Button
+        android:id="@+id/button_request_zip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="两个网络请求合并结果"/>
+
+    <Button
+        android:id="@+id/button_request_flat_map"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="两个网络请求顺序执行"/>
 
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

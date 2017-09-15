@@ -20,11 +20,11 @@ public enum ProtocolsError {
 	/**
 	 * 数据格式错误
 	 */
-	ERROR_DATA_FORMAT,
+	ERROR_FORMAT,
 	/**
 	 * 网络权限问题
 	 */
-	ERROR_NETWORK_PERMISSION,
+	ERROR_PERMISSION,
 	/**
 	 * 未知错误
 	 */

@@ -1,30 +1,26 @@
 package com.tuacy.networkframe.library;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 
-import com.tuacy.networkframe.library.base.ProtocolsBaseRequest;
-import com.tuacy.networkframe.library.base.ProtocolsNetworkAllowType;
 import com.tuacy.networkframe.library.callback.ProtocolsBaseCallback;
 import com.tuacy.networkframe.library.exception.ProtocolsError;
 import com.tuacy.networkframe.library.exception.ProtocolsException;
-import com.tuacy.networkframe.library.utils.NetworkUtils;
 
 import rx.Subscriber;
 
 public final class ProtocolsSubscriber<T> extends Subscriber<T> {
 
 	private Context                  mContext;
-	private ProtocolsBaseRequest<T>  mRequest;
+	private Object                   mTag;
 	private ProtocolsBaseCallback<T> mCallback;
 
-	public ProtocolsSubscriber(Context context, ProtocolsBaseRequest<T> request) {
-		this(context, request, null);
+	public ProtocolsSubscriber(Context context, ProtocolsBaseCallback<T> callback) {
+		this(context, null, callback);
 	}
 
-	public ProtocolsSubscriber(Context context, ProtocolsBaseRequest<T> request, ProtocolsBaseCallback<T> callback) {
+	public ProtocolsSubscriber(Context context, Object tag, ProtocolsBaseCallback<T> callback) {
 		mContext = context;
-		mRequest = request;
+		mTag = tag;
 		mCallback = callback;
 	}
 
@@ -32,13 +28,8 @@ public final class ProtocolsSubscriber<T> extends Subscriber<T> {
 	public void onStart() {
 		super.onStart();
 		if (mCallback != null) {
-			mCallback.onProtocolStart(mRequest.getTag());
-			if (!allowNetwork(mContext, mRequest.getNetworkAllowType())) {
-				unsubscribe();
-				mCallback.onProtocolError(mRequest.getTag(), new ProtocolsException(ProtocolsError.ERROR_NETWORK_PERMISSION));
-			}
+			mCallback.onProtocolStart(mTag);
 		}
-
 	}
 
 	@Override
@@ -50,9 +41,9 @@ public final class ProtocolsSubscriber<T> extends Subscriber<T> {
 	public void onError(Throwable e) {
 		if (mCallback != null) {
 			if (e instanceof ProtocolsException) {
-				mCallback.onProtocolError(mRequest.getTag(), (ProtocolsException) e);
+				mCallback.onProtocolError(mTag, (ProtocolsException) e);
 			} else {
-				mCallback.onProtocolError(mRequest.getTag(), new ProtocolsException(e, ProtocolsError.ERROR_UNKNOWN));
+				mCallback.onProtocolError(mTag, new ProtocolsException(e, ProtocolsError.ERROR_UNKNOWN));
 			}
 		}
 	}
@@ -60,26 +51,7 @@ public final class ProtocolsSubscriber<T> extends Subscriber<T> {
 	@Override
 	public void onNext(T t) {
 		if (mCallback != null) {
-			mCallback.onProtocolSuccess(mRequest.getTag(), t);
+			mCallback.onProtocolSuccess(mTag, t);
 		}
-	}
-
-	private boolean allowNetwork(@NonNull Context context, ProtocolsNetworkAllowType allowType) {
-		boolean allow = false;
-		switch (allowType) {
-			case ALLOW_NETWORK_NONE:
-				allow = false;
-				break;
-			case ALLOW_NETWORK_ALL:
-				allow = NetworkUtils.isNetworkConnect(context);
-				break;
-			case ALLOW_NETWORK_WIFI:
-				allow = NetworkUtils.isNetworkConnect(context) && NetworkUtils.isWifiConnected(context);
-				break;
-			case ALLOW_NETWORK_MOBILE:
-				allow = NetworkUtils.isNetworkConnect(context) && NetworkUtils.isMobileConnected(context);
-				break;
-		}
-		return allow;
 	}
 }
