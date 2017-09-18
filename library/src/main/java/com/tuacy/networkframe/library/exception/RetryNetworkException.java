@@ -10,6 +10,9 @@ import rx.Observable;
 import rx.functions.Func1;
 import rx.functions.Func2;
 
+/**
+ * 在请求的过程中有些异常，可以重新请求
+ */
 public class RetryNetworkException implements Func1<Observable<? extends Throwable>, Observable<?>> {
 
 	/*retry次数*/

@@ -11,7 +11,9 @@ import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.HttpUrl;
 
-
+/**
+ * Cookies操作
+ */
 public class ProtocolsCookies implements CookieJar {
 
 	private final Map<String, List<Cookie>> mCookiesMap = new HashMap<>();

@@ -9,7 +9,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 import rx.Observable;
 
 /**
- * 网络请求的request Retrofit注解不好表达的一些参数
+ * 网络请求的request,Retrofit注解表达不了的一些参数
  */
 public abstract class ProtocolsBaseRequest<T> {
 
@@ -38,7 +38,7 @@ public abstract class ProtocolsBaseRequest<T> {
 	 */
 	protected Converter.Factory         mFactory          = GsonConverterFactory.create();
 	/**
-	 * network all type {@link ProtocolsNetworkAllowType}
+	 * network allow type {@link ProtocolsNetworkAllowType}
 	 */
 	protected ProtocolsNetworkAllowType mNetworkAllowType = ProtocolsNetworkAllowType.ALLOW_NETWORK_ALL;
 

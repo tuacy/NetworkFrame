@@ -8,7 +8,6 @@ import com.tuacy.networkframe.library.callback.ProtocolsBaseCallback;
 import com.tuacy.networkframe.library.cookie.ProtocolsCookies;
 import com.tuacy.networkframe.library.exception.ProtocolsError;
 import com.tuacy.networkframe.library.exception.ProtocolsException;
-import com.tuacy.networkframe.library.exception.RetryNetworkException;
 import com.tuacy.networkframe.library.functions.ProtocolsFlatMapFunc;
 import com.tuacy.networkframe.library.functions.ProtocolsZipFunc;
 import com.tuacy.networkframe.library.transformer.ProtocolsPermissionTransformer;
@@ -131,7 +130,7 @@ public class ProtocolsClient {
 		};
 
 		return request.getObservable(retrofit)
-					  .retryWhen(new RetryNetworkException())
+					  //					  .retryWhen(new RetryNetworkException())
 					  .onErrorResumeNext(mErrorResume)
 					  .compose(new ProtocolsPermissionTransformer<>(context, request))
 					  .subscribeOn(Schedulers.io())
@@ -171,7 +170,7 @@ public class ProtocolsClient {
 		};
 
 		return request.getObservable(retrofit)
-					  .retryWhen(new RetryNetworkException())
+					  //					  .retryWhen(new RetryNetworkException())
 					  .onErrorResumeNext(mErrorResume)
 					  .compose(new ProtocolsPermissionTransformer<>(context, request))
 					  .compose(lifecycleTransformer)
@@ -243,7 +242,7 @@ public class ProtocolsClient {
 				return func.call(p, n);
 			}
 		})
-												.retryWhen(new RetryNetworkException())
+												//												.retryWhen(new RetryNetworkException())
 												.onErrorResumeNext(mErrorResume)
 												.subscribeOn(Schedulers.io())
 												.unsubscribeOn(Schedulers.io())
@@ -284,7 +283,7 @@ public class ProtocolsClient {
 				return getProtocolsRequestObservable(context, func.call(t, requestTwo));
 			}
 		})
-												.retryWhen(new RetryNetworkException())
+												//												.retryWhen(new RetryNetworkException())
 												.onErrorResumeNext(mErrorResume)
 												.subscribeOn(Schedulers.io())
 												.unsubscribeOn(Schedulers.io())
