@@ -117,7 +117,7 @@ public class MainActivity extends BaseActivity {
 		findViewById(R.id.button_get_one_book_url).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				Call<List<BookBean>> requestCall = mNetworkApi.getBookByUrl("books");
+				Call<List<BookBean>> requestCall = mNetworkApi.getBookByUrl("http://192.168.5.14:3033/books");
 				requestCall.enqueue(new Callback<List<BookBean>>() {
 					@Override
 					public void onResponse(@NonNull Call<List<BookBean>> call, @NonNull Response<List<BookBean>> response) {

@@ -34,8 +34,9 @@ public interface AppRetrofitApi {
 	@GET("books")
 	Call<List<BookBean>> getBookByQueryName(@Query("id") int id, @QueryName String title);
 
-	@GET
+	@GET("books")
 	Call<List<BookBean>> getBookByUrl(@Url String relateUrl);
+
 
 	@POST("books")
 	Call<BookBean> addBookPost(@Body BookBean book);
